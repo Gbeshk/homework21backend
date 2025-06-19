@@ -1,6 +1,21 @@
+import { IsString, IsInt, IsNumber, Min, IsOptional } from 'class-validator';
+
 export class UpdateExpenseDto {
-  category?: string;
-  productName?: string;
-  quantity?: number;
-  price?: number;
+  @IsOptional()
+  @IsString()
+  category: string;
+
+  @IsOptional()
+  @IsString()
+  productName: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  price: number;
 }

@@ -4,29 +4,43 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
-import { CreateExpenseDto } from './expensesdto/create-expense.dto';
 import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
+import { CategoryPipe } from './pipes/category.pipe';
+import { CreateExpenseDto } from './expensesdto/create-expense.dto';
+import { QueryParamsDto } from './expensesdto/query-params.dto';
 
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
 
   @Get()
-  getAllUsers() {
-    return this.expensesService.getAllExpenses();
+  getAllExpenses(
+    @Query('category', new CategoryPipe()) category: string,
+    @Query() { page, take, priceFrom, priceTo }: QueryParamsDto,
+  ) {
+    const start = (page - 1) * take;
+    const end = page * take;
+    return this.expensesService.getAllExpenses(
+      category,
+      start,
+      end,
+      priceFrom,
+      priceTo,
+    );
   }
-
   @Get(':id')
-  getUserById(@Param('id') id) {
-    return this.expensesService.getExpenseById(Number(id));
+  getExpenseById(@Param('id', ParseIntPipe) id) {
+    return this.expensesService.getExpenseById(id);
   }
 
   @Post()
-  createUser(@Body() createExpenseDto: CreateExpenseDto) {
+  createExpense(@Body() createExpenseDto: CreateExpenseDto) {
     const category = createExpenseDto?.category;
     const productName = createExpenseDto?.productName;
     const quantity = createExpenseDto?.quantity;
@@ -45,12 +59,15 @@ export class ExpensesController {
   }
 
   @Delete(':id')
-  deleteUserById(@Param('id') id) {
-    return this.expensesService.deleteExpenseById(Number(id));
+  deleteExpenseById(@Param('id', ParseIntPipe) id) {
+    return this.expensesService.deleteExpenseById(id);
   }
 
   @Put(':id')
-  udpateUser(@Param('id') id, @Body() UpdateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.updateExpenseById(Number(id), UpdateExpenseDto);
+  updateExpense(
+    @Param('id', ParseIntPipe) id,
+    @Body() UpdateExpenseDto: UpdateExpenseDto,
+  ) {
+    return this.expensesService.updateExpenseById(id, UpdateExpenseDto);
   }
 }

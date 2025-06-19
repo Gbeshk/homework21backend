@@ -18,7 +18,6 @@ export class UsersService {
       email: 'giorgi@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
-      expenses: [],
     },
     {
       id: 2,
@@ -27,7 +26,6 @@ export class UsersService {
       email: 'luka@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
-      expenses: [],
     },
     {
       id: 3,
@@ -36,7 +34,6 @@ export class UsersService {
       email: 'user@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
-      expenses: [],
     },
     {
       id: 4,
@@ -44,13 +41,33 @@ export class UsersService {
       lastName: 'meladze',
       email: 'user@gmail.com',
       phoneNumber: '1541212412',
-      gender: 'felame',
-      expenses: [],
+      gender: 'female',
     },
   ];
+  getAllUsers(
+    start: number,
+    end: number,
+    gender: string,
+    email: string,
+  ): CreateUserDto[] {
+    let filtered = this.users;
+    let genderFilter: string;
+    if (gender == 'm') {
+      genderFilter = 'male';
+    }
+    if (gender == 'f') {
+      genderFilter = 'female';
+    }
+    if (gender) {
+      filtered = filtered.filter((user) => user.gender === genderFilter);
+    }
+    if (email) {
+      filtered = filtered.filter((user) =>
+        user.email.toLowerCase().startsWith(email.toLowerCase()),
+      );
+    }
 
-  getAllUsers() {
-    return this.users;
+    return filtered.slice(start, end);
   }
 
   getUserById(id: number) {
@@ -77,7 +94,6 @@ export class UsersService {
       email,
       phoneNumber,
       gender,
-      expenses: [],
     };
     this.users.push(newUser);
 
@@ -103,9 +119,6 @@ export class UsersService {
     }
     if (updateUserDto.lastName) {
       updateReq.lastName = updateUserDto.lastName;
-    }
-    if (updateUserDto.email) {
-      updateReq.email = updateUserDto.email;
     }
     if (updateUserDto.phoneNumber) {
       updateReq.phoneNumber = updateUserDto.phoneNumber;

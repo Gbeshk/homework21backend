@@ -4,8 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateExpenseDto } from './expensesdto/create-expense.dto';
-import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
+import {
+  ICreateExpense,
+  IUpdateExpense,
+} from './interfaces/expenses.interface';
 
 @Injectable()
 export class ExpensesService {
@@ -36,12 +38,31 @@ export class ExpensesService {
     },
   ];
 
-  getAllExpenses() {
-    return this.expenses;
+  getAllExpenses(
+    category: string,
+    start: number,
+    end: number,
+    priceFrom: number,
+    priceTo: number,
+  ) {
+    let filtered = this.expenses;
+
+    if (category) {
+      filtered = filtered.filter((expense) => expense.category === category);
+    }
+    if (priceFrom !== undefined && priceTo !== undefined) {
+      filtered = filtered.filter(
+        (expense) => expense.price >= priceFrom && expense.price <= priceTo,
+      );
+    }
+    return filtered.slice(start, end);
   }
 
   getExpenseById(id: number) {
     const user = this.expenses.find((el) => el.id === id);
+    if (!user) {
+      throw new NotFoundException(HttpStatus.NOT_FOUND);
+    }
     return user;
   }
 
@@ -51,7 +72,8 @@ export class ExpensesService {
     quantity,
     price,
     email,
-  }: CreateExpenseDto) {
+    totalPrice,
+  }: ICreateExpense) {
     if (!email || !category || !productName || !quantity || !price) {
       throw new HttpException('all fields are requied', HttpStatus.BAD_REQUEST);
     }
@@ -64,7 +86,7 @@ export class ExpensesService {
       productName,
       quantity,
       price,
-      totalPrice: price * quantity,
+      totalPrice,
     };
     this.expenses.push(newExpense);
 
@@ -80,11 +102,12 @@ export class ExpensesService {
     return 'deleted successfully';
   }
 
-  updateExpenseById(id: number, updateExpenseDto: UpdateExpenseDto) {
+  updateExpenseById(id: number, updateExpenseDto: IUpdateExpense) {
     const index = this.expenses.findIndex((el) => el.id === id);
     if (index === -1) throw new NotFoundException('user not found');
 
-    const updateReq: UpdateExpenseDto = {};
+    const updateReq: IUpdateExpense = {};
+
     if (updateExpenseDto.category) {
       updateReq.category = updateExpenseDto.category;
     }
@@ -94,10 +117,15 @@ export class ExpensesService {
     if (updateExpenseDto.quantity) {
       updateReq.quantity = updateExpenseDto.quantity;
     }
-
     if (updateExpenseDto.price) {
       updateReq.price = updateExpenseDto.price;
     }
+
+    const currentExpense = this.expenses[index];
+    const newPrice = updateReq.price ?? currentExpense.price;
+    const newQuantity = updateReq.quantity ?? currentExpense.quantity;
+    updateReq.totalPrice = newPrice * newQuantity;
+
     this.expenses[index] = {
       ...this.expenses[index],
       ...updateReq,
