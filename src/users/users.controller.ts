@@ -59,4 +59,8 @@ export class UsersController {
   ) {
     return this.usersService.updateUserById(id, updateUserDto);
   }
+  @Post('upgrade-subscription')
+  updateSubscription(@Body() body: { email: string }) {
+    return this.usersService.updateSubscription(body.email);
+  }
 }

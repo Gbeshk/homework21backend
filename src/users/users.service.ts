@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -18,6 +17,8 @@ export class UsersService {
       email: 'giorgi@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
+      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
+      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
     },
     {
       id: 2,
@@ -26,6 +27,8 @@ export class UsersService {
       email: 'luka@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
+      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
+      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
     },
     {
       id: 3,
@@ -34,6 +37,8 @@ export class UsersService {
       email: 'user@gmail.com',
       phoneNumber: '551537703',
       gender: 'male',
+      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
+      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
     },
     {
       id: 4,
@@ -42,6 +47,8 @@ export class UsersService {
       email: 'user@gmail.com',
       phoneNumber: '1541212412',
       gender: 'female',
+      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
+      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
     },
   ];
   getAllUsers(
@@ -87,6 +94,10 @@ export class UsersService {
     }
 
     const lastId = this.users[this.users.length - 1]?.id || 0;
+    const now = new Date();
+    const oneMonthLater = new Date();
+    oneMonthLater.setMonth(now.getMonth() + 1);
+
     const newUser = {
       id: lastId + 1,
       firstName,
@@ -94,6 +105,8 @@ export class UsersService {
       email,
       phoneNumber,
       gender,
+      subscriptionStartDate: now.toISOString(),
+      subscriptionEndDate: oneMonthLater.toISOString(),
     };
     this.users.push(newUser);
 
@@ -132,5 +145,23 @@ export class UsersService {
     };
 
     return 'updated successfully';
+  }
+  updateSubscription(email: string) {
+    const user = this.users.find((u) => u.email === email);
+
+    if (!user) {
+      return { message: 'User not found' };
+    }
+
+    const currentDate = new Date(user.subscriptionEndDate);
+
+    const newSubEnd = new Date(currentDate);
+    newSubEnd.setMonth(newSubEnd.getMonth() + 1);
+
+    user.subscriptionEndDate = newSubEnd.toISOString();
+
+    return {
+      message: 'Subscription extended by 1 month',
+    };
   }
 }
