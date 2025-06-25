@@ -1,17 +1,6 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsEmail,
-  IsInt,
-  IsNumber,
-  Min,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsNumber, Min } from 'class-validator';
 
 export class CreateExpenseDto {
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
   @IsNotEmpty()
   @IsString()
   category: string;

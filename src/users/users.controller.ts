@@ -26,7 +26,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  getUserById(@Param('id', ParseIntPipe) id) {
+  getUserById(@Param('id') id) {
     return this.usersService.getUserById(id);
   }
 
@@ -48,15 +48,12 @@ export class UsersController {
   }
 
   @Delete(':id')
-  deleteUserById(@Param('id', ParseIntPipe) id) {
+  deleteUserById(@Param('id') id) {
     return this.usersService.deleteUserById(id);
   }
 
   @Put(':id')
-  udpateUser(
-    @Param('id', ParseIntPipe) id,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  udpateUser(@Param('id') id, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.updateUserById(id, updateUserDto);
   }
   @Post('upgrade-subscription')

@@ -1,136 +1,123 @@
 import {
-  HttpException,
-  HttpStatus,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  ICreateExpense,
-  IUpdateExpense,
-} from './interfaces/expenses.interface';
+import { Expense } from './schemas/expenses.schema';
+import { isValidObjectId, Model, Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from 'src/users/schemas/user.schema';
+import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
 
 @Injectable()
 export class ExpensesService {
-  private expenses = [
-    {
-      id: 1,
-      category: 'electronics',
-      productName: 'iphone',
-      quantity: 2,
-      price: 2000,
-      totalPrice: 4000,
-    },
-    {
-      id: 2,
-      category: 'electronics',
-      productName: 'tablet',
-      quantity: 2,
-      price: 1000,
-      totalPrice: 2000,
-    },
-    {
-      id: 3,
-      category: 'clothes',
-      productName: 'shirt',
-      quantity: 2,
-      price: 50,
-      totalPrice: 100,
-    },
-  ];
+  constructor(
+    @InjectModel('Expense') private expenseModel: Model<Expense>,
+    @InjectModel('user') private userModel: Model<User>,
+  ) {}
 
-  getAllExpenses(
+  async getAllExpenses(
     category: string,
     start: number,
     end: number,
     priceFrom: number,
     priceTo: number,
   ) {
-    let filtered = this.expenses;
+    const filter: any = {};
 
     if (category) {
-      filtered = filtered.filter((expense) => expense.category === category);
+      filter.category = category;
     }
+
     if (priceFrom !== undefined && priceTo !== undefined) {
-      filtered = filtered.filter(
-        (expense) => expense.price >= priceFrom && expense.price <= priceTo,
-      );
+      filter.price = { $gte: priceFrom, $lte: priceTo };
     }
-    return filtered.slice(start, end);
+
+    const limit = end - start;
+    const skip = start;
+
+    const expenses = await this.expenseModel
+      .find(filter)
+      .skip(skip)
+      .limit(limit);
+
+    return expenses;
   }
 
-  getExpenseById(id: number) {
-    const user = this.expenses.find((el) => el.id === id);
-    if (!user) {
-      throw new NotFoundException(HttpStatus.NOT_FOUND);
+  async getExpenseById(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid expense ID');
     }
-    return user;
+
+    const expense = await this.expenseModel.findById(id);
+
+    if (!expense) {
+      throw new NotFoundException('Expense not found');
+    }
+
+    return expense;
   }
 
-  createExpense({
+  async createExpense({
     category,
     productName,
     quantity,
     price,
-    email,
     totalPrice,
-  }: ICreateExpense) {
-    if (!email || !category || !productName || !quantity || !price) {
-      throw new HttpException('all fields are requied', HttpStatus.BAD_REQUEST);
-    }
-
-    const lastId = this.expenses[this.expenses.length - 1]?.id || 0;
-    const newExpense = {
-      id: lastId + 1,
-      email,
+    userId,
+  }) {
+    const existExpense = await this.userModel.findById(userId);
+    if (!existExpense) throw new BadRequestException('expense not found');
+    const newExpense = await this.expenseModel.create({
       category,
       productName,
       quantity,
       price,
       totalPrice,
-    };
-    this.expenses.push(newExpense);
+      author: existExpense._id,
+    });
+    await this.userModel.findByIdAndUpdate(existExpense._id, {
+      $push: { expenses: newExpense._id },
+    });
 
-    return 'created successfully';
+    return { success: 'ok', data: newExpense };
   }
 
-  deleteExpenseById(id: number) {
-    const index = this.expenses.findIndex((el) => el.id === id);
-    if (index === -1) throw new NotFoundException('user not found');
+  async deleteExpenseById(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid expense ID');
+    }
 
-    this.expenses.splice(index, 1);
+    const expense = await this.expenseModel.findById(id);
+    if (!expense) {
+      throw new NotFoundException('Expense not found');
+    }
 
-    return 'deleted successfully';
+    await this.expenseModel.findByIdAndDelete(id);
+
+    await this.userModel.updateOne(
+      { _id: expense.author },
+      { $pull: { expenses: new Types.ObjectId(id) } },
+    );
+
+    return 'Expense deleted successfully';
   }
 
-  updateExpenseById(id: number, updateExpenseDto: IUpdateExpense) {
-    const index = this.expenses.findIndex((el) => el.id === id);
-    if (index === -1) throw new NotFoundException('user not found');
-
-    const updateReq: IUpdateExpense = {};
-
-    if (updateExpenseDto.category) {
-      updateReq.category = updateExpenseDto.category;
-    }
-    if (updateExpenseDto.productName) {
-      updateReq.productName = updateExpenseDto.productName;
-    }
-    if (updateExpenseDto.quantity) {
-      updateReq.quantity = updateExpenseDto.quantity;
-    }
-    if (updateExpenseDto.price) {
-      updateReq.price = updateExpenseDto.price;
+  async updateExpenseById(id: string, updateExpenseDto: UpdateExpenseDto) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid expense ID');
     }
 
-    const currentExpense = this.expenses[index];
-    const newPrice = updateReq.price ?? currentExpense.price;
-    const newQuantity = updateReq.quantity ?? currentExpense.quantity;
-    updateReq.totalPrice = newPrice * newQuantity;
+    const updatedExpense = await this.expenseModel.findByIdAndUpdate(
+      id,
+      { $set: updateExpenseDto },
+      { new: true },
+    );
 
-    this.expenses[index] = {
-      ...this.expenses[index],
-      ...updateReq,
-    };
+    if (!updatedExpense) {
+      throw new NotFoundException('Expense not found');
+    }
 
-    return 'updated successfully';
+    return 'Expense updated successfully';
   }
 }

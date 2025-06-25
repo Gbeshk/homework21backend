@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -6,153 +7,116 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
+import { User } from './schemas/user.schema';
+import { Expense } from 'src/expenses/schemas/expenses.schema';
 
 @Injectable()
 export class UsersService {
-  private users = [
-    {
-      id: 1,
-      firstName: 'giorgi',
-      lastName: 'beshkenadze',
-      email: 'giorgi@gmail.com',
-      phoneNumber: '551537703',
-      gender: 'male',
-      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
-      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
-    },
-    {
-      id: 2,
-      firstName: 'luka',
-      lastName: 'beshkenadze',
-      email: 'luka@gmail.com',
-      phoneNumber: '551537703',
-      gender: 'male',
-      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
-      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
-    },
-    {
-      id: 3,
-      firstName: 'giorgi',
-      lastName: 'beshkenadze',
-      email: 'user@gmail.com',
-      phoneNumber: '551537703',
-      gender: 'male',
-      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
-      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
-    },
-    {
-      id: 4,
-      firstName: 'mariami',
-      lastName: 'meladze',
-      email: 'user@gmail.com',
-      phoneNumber: '1541212412',
-      gender: 'female',
-      subscriptionStartDate: '2025-06-21T20:29:47.326Z',
-      subscriptionEndDate: '2025-07-21T20:29:47.326Z',
-    },
-  ];
-  getAllUsers(
-    start: number,
-    end: number,
-    gender: string,
-    email: string,
-  ): CreateUserDto[] {
-    let filtered = this.users;
-    let genderFilter: string;
-    if (gender == 'm') {
-      genderFilter = 'male';
-    }
-    if (gender == 'f') {
-      genderFilter = 'female';
-    }
-    if (gender) {
-      filtered = filtered.filter((user) => user.gender === genderFilter);
-    }
+  constructor(
+    @InjectModel('User') private userModel: Model<User>,
+    @InjectModel('Expense') private expenseModel: Model<Expense>,
+  ) {}
+
+  async getAllUsers(start: number, end: number, gender: string, email: string) {
+    const filter: any = {};
+
+    if (gender === 'm') filter.gender = 'male';
+    if (gender === 'f') filter.gender = 'female';
+
     if (email) {
-      filtered = filtered.filter((user) =>
-        user.email.toLowerCase().startsWith(email.toLowerCase()),
-      );
+      filter.email = { $regex: `^${email}`, $options: 'i' };
     }
 
-    return filtered.slice(start, end);
+    const limit = end - start;
+    const skip = start;
+
+    const result = await this.userModel.find(filter).skip(skip).limit(limit);
+
+    return result;
   }
 
-  getUserById(id: number) {
-    const user = this.users.find((el) => el.id === id);
+  async getUserById(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     return user;
   }
-
-  createUser({
+  async createUser({
     firstName,
     lastName,
     email,
     phoneNumber,
     gender,
   }: CreateUserDto) {
-    if (!firstName || !lastName || !email || !phoneNumber || !gender) {
-      throw new HttpException('all fields are requied', HttpStatus.BAD_REQUEST);
+    const existUser = await this.userModel.findOne({ email });
+    if (existUser) {
+      throw new BadRequestException('Email alredy in use');
     }
-
-    const lastId = this.users[this.users.length - 1]?.id || 0;
-    const now = new Date();
+    const currentDate = new Date();
     const oneMonthLater = new Date();
-    oneMonthLater.setMonth(now.getMonth() + 1);
-
-    const newUser = {
-      id: lastId + 1,
+    oneMonthLater.setMonth(currentDate.getMonth() + 1);
+    const newUser = await this.userModel.create({
       firstName,
       lastName,
       email,
       phoneNumber,
       gender,
-      subscriptionStartDate: now.toISOString(),
+      subscriptionStartDate: currentDate.toISOString(),
       subscriptionEndDate: oneMonthLater.toISOString(),
-    };
-    this.users.push(newUser);
+    });
 
-    return 'created successfully';
+    return { success: 'ok', data: newUser };
   }
 
-  deleteUserById(id: number) {
-    const index = this.users.findIndex((el) => el.id === id);
-    if (index === -1) throw new NotFoundException('user not found');
+  async deleteUserById(id: string) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid user ID');
+    }
 
-    this.users.splice(index, 1);
+    const deletedUser = await this.userModel.findByIdAndDelete(id);
 
-    return 'deleted successfully';
+    if (!deletedUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.expenseModel.deleteMany({ author: id });
+
+    return 'User deleted successfully';
   }
 
-  updateUserById(id: number, updateUserDto: UpdateUserDto) {
-    const index = this.users.findIndex((el) => el.id === id);
-    if (index === -1) throw new NotFoundException('user not found');
+  async updateUserById(id: string, updateUserDto: UpdateUserDto) {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid user ID');
+    }
 
-    const updateReq: UpdateUserDto = {};
-    if (updateUserDto.firstName) {
-      updateReq.firstName = updateUserDto.firstName;
-    }
-    if (updateUserDto.lastName) {
-      updateReq.lastName = updateUserDto.lastName;
-    }
-    if (updateUserDto.phoneNumber) {
-      updateReq.phoneNumber = updateUserDto.phoneNumber;
-    }
-    if (updateUserDto.gender) {
-      updateReq.gender = updateUserDto.gender;
-    }
-    this.users[index] = {
-      ...this.users[index],
-      ...updateReq,
-    };
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: updateUserDto },
+      { new: true },
+    );
 
-    return 'updated successfully';
+    if (!updatedUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    return 'User updated successfully';
   }
-  updateSubscription(email: string) {
-    const user = this.users.find((u) => u.email === email);
+
+  async updateSubscription(email: string) {
+    const user = await this.userModel.findOne({ email });
 
     if (!user) {
       return { message: 'User not found' };
     }
-
     const currentDate = new Date(user.subscriptionEndDate);
 
     const newSubEnd = new Date(currentDate);
@@ -160,8 +124,8 @@ export class UsersService {
 
     user.subscriptionEndDate = newSubEnd.toISOString();
 
-    return {
-      message: 'Subscription extended by 1 month',
-    };
+    await user.save();
+
+    return { message: 'Subscription extended by 1 month' };
   }
 }
