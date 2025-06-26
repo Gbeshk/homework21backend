@@ -32,19 +32,7 @@ export class UsersController {
 
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
-    const firstName = createUserDto?.firstName;
-    const lastName = createUserDto?.lastName;
-    const email = createUserDto?.email;
-    const phoneNumber = createUserDto?.phoneNumber;
-    const gender = createUserDto?.gender;
-
-    return this.usersService.createUser({
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      gender,
-    });
+    return this.usersService.createUser(createUserDto);
   }
 
   @Delete(':id')

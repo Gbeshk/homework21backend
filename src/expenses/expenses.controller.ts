@@ -5,7 +5,6 @@ import {
   Get,
   Headers,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -17,7 +16,11 @@ import { CategoryPipe } from './pipes/category.pipe';
 import { CreateExpenseDto } from './expensesdto/create-expense.dto';
 import { QueryParamsDto } from './expensesdto/query-params.dto';
 import { HasUserId } from 'src/common/guards/has-user-id.guard';
+import { IsAuthGuard } from 'src/auth/guards/is-auth.guard';
+import { UserId } from 'src/users/decorators/user.decorator';
+import { ObjectId } from 'mongoose';
 
+@UseGuards(IsAuthGuard)
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
@@ -44,9 +47,8 @@ export class ExpensesController {
   }
 
   @Post()
-  @UseGuards(HasUserId)
   createExpense(
-    @Headers('user-id') userId: string,
+    @UserId() userId: string,
     @Body() createExpenseDto: CreateExpenseDto,
   ) {
     const category = createExpenseDto?.category;
@@ -66,12 +68,16 @@ export class ExpensesController {
   }
 
   @Delete(':id')
-  deleteExpenseById(@Param('id') id) {
-    return this.expensesService.deleteExpenseById(id);
+  deleteExpenseById(@UserId() userId: ObjectId, @Param('id') id) {
+    return this.expensesService.deleteExpenseById(id, userId);
   }
 
   @Put(':id')
-  updateExpense(@Param('id') id, @Body() UpdateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.updateExpenseById(id, UpdateExpenseDto);
+  updateExpense(
+    @Param('id') id,
+    @Body() UpdateExpenseDto: UpdateExpenseDto,
+    @UserId() userId: ObjectId,
+  ) {
+    return this.expensesService.updateExpenseById(id, UpdateExpenseDto, userId);
   }
 }

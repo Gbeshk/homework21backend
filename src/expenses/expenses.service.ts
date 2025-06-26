@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Expense } from './schemas/expenses.schema';
-import { isValidObjectId, Model, Types } from 'mongoose';
+import { isValidObjectId, Model, ObjectId, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/users/schemas/user.schema';
 import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
@@ -83,12 +83,15 @@ export class ExpensesService {
     return { success: 'ok', data: newExpense };
   }
 
-  async deleteExpenseById(id: string) {
+  async deleteExpenseById(id: string, userId: ObjectId) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid expense ID');
     }
 
     const expense = await this.expenseModel.findById(id);
+    if (expense?.author != userId) {
+      throw new BadRequestException('you dont have permission');
+    }
     if (!expense) {
       throw new NotFoundException('Expense not found');
     }
@@ -103,11 +106,19 @@ export class ExpensesService {
     return 'Expense deleted successfully';
   }
 
-  async updateExpenseById(id: string, updateExpenseDto: UpdateExpenseDto) {
+  async updateExpenseById(
+    id: string,
+    updateExpenseDto: UpdateExpenseDto,
+    userId: ObjectId,
+  ) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid expense ID');
     }
+    const expense = await this.expenseModel.findById(id);
 
+    if (expense?.author != userId) {
+      throw new BadRequestException('you dont have permission');
+    }
     const updatedExpense = await this.expenseModel.findByIdAndUpdate(
       id,
       { $set: updateExpenseDto },

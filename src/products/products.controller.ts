@@ -22,19 +22,7 @@ export class ProductsController {
 
   @Post()
   create(@Body() createProductDto: CreateProductDto) {
-    const name = createProductDto?.name;
-    const price = createProductDto?.price;
-    const category = createProductDto?.category;
-    const description = createProductDto?.description;
-    const quantity = createProductDto?.quantity;
-
-    return this.productsService.create({
-      name,
-      price,
-      category,
-      description,
-      quantity,
-    });
+    return this.productsService.create(createProductDto);
   }
   @Get()
   @UseGuards(SafeGuard)
