@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -8,15 +9,17 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { isValidObjectId, Model, Types } from 'mongoose';
+import { isValidObjectId, Model, ObjectId, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { Expense } from 'src/expenses/schemas/expenses.schema';
+import { Product } from 'src/products/schemas/product.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel('User') private userModel: Model<User>,
     @InjectModel('Expense') private expenseModel: Model<Expense>,
+    @InjectModel('Product') private productModel: Model<Product>,
   ) {}
 
   async getAllUsers(start: number, end: number, gender: string, email: string) {
@@ -127,5 +130,38 @@ export class UsersService {
     await user.save();
 
     return { message: 'Subscription extended by 1 month' };
+  }
+  async changeRole(userId: ObjectId, userToChange: string, newRole: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    const currentRole = user.role;
+    console.log(currentRole);
+    if (currentRole != 'admin') {
+      throw new ForbiddenException('only admins have permission');
+    }
+    return this.userModel.findByIdAndUpdate(
+      userToChange,
+      { role: newRole },
+      { new: true },
+    );
+  }
+  async getStatistics(userId: ObjectId) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    const currentRole = user.role;
+    console.log(currentRole);
+    if (currentRole != 'admin') {
+      throw new ForbiddenException('only admins have permission');
+    }
+
+    const totalUsers = await this.userModel.countDocuments();
+    const totalExpenses = await this.expenseModel.countDocuments();
+    const totalProducts = await this.productModel.countDocuments();
+
+    return {
+      totalUsers,
+      totalExpenses,
+      totalProducts,
+    };
   }
 }

@@ -54,6 +54,12 @@ export class User {
   subscriptionEndDate: string;
 
   @Prop({
+    type: String,
+    default: 'user',
+  })
+  role: string;
+
+  @Prop({
     type: [mongoose.Types.ObjectId],
     ref: 'expenses',
     default: [],

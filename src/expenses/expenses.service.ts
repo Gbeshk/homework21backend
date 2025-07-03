@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { Expense } from './schemas/expenses.schema';
 import { isValidObjectId, Model, ObjectId, Types } from 'mongoose';
@@ -16,32 +17,40 @@ export class ExpensesService {
     @InjectModel('user') private userModel: Model<User>,
   ) {}
 
+  // async onModuleInit() {
+  //   const expenses: any = [];
+  //   for (let i = 0; i < 100; i++) {
+  //     expenses.push({
+  //       productName: `name ${i}`,
+  //       category: `category ${i}`,
+  //       quantity: i,
+  //       price: i * 100,
+  //       author: '685d1ebb384a5f39750b1f54',
+  //       totalPrice: i * i * 100,
+  //     });
+  //   }
+  //   await this.expenseModel.insertMany(expenses);
+  //   console.log("done");
+
+  // }
+
   async getAllExpenses(
     category: string,
     start: number,
     end: number,
     priceFrom: number,
     priceTo: number,
+    page: number,
+    take: number,
   ) {
-    const filter: any = {};
-
-    if (category) {
-      filter.category = category;
-    }
-
-    if (priceFrom !== undefined && priceTo !== undefined) {
-      filter.price = { $gte: priceFrom, $lte: priceTo };
-    }
-
-    const limit = end - start;
-    const skip = start;
-
+    const total = await this.expenseModel.countDocuments();
     const expenses = await this.expenseModel
-      .find(filter)
-      .skip(skip)
-      .limit(limit);
-
-    return expenses;
+      .find()
+      .populate({ path: 'author', select: 'email firstName lastName' })
+      .skip((page - 1) * take)
+      .limit(take)
+      .sort({ _id: -1 });
+    return { total, take, page, expenses };
   }
 
   async getExpenseById(id: string) {

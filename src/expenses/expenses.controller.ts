@@ -15,7 +15,6 @@ import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
 import { CategoryPipe } from './pipes/category.pipe';
 import { CreateExpenseDto } from './expensesdto/create-expense.dto';
 import { QueryParamsDto } from './expensesdto/query-params.dto';
-import { HasUserId } from 'src/common/guards/has-user-id.guard';
 import { IsAuthGuard } from 'src/auth/guards/is-auth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
 import { ObjectId } from 'mongoose';
@@ -38,6 +37,8 @@ export class ExpensesController {
       end,
       priceFrom,
       priceTo,
+      +page,
+      +take,
     );
   }
 
