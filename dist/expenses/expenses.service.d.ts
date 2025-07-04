@@ -38,4 +38,6 @@ export declare class ExpensesService {
     }>;
     deleteExpenseById(id: string, userId: ObjectId): Promise<string>;
     updateExpenseById(id: string, updateExpenseDto: UpdateExpenseDto, userId: ObjectId): Promise<string>;
+    getStatistic(): Promise<any[]>;
+    getSpenders(limit: number): Promise<any[]>;
 }

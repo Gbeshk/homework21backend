@@ -22,6 +22,8 @@ let User = class User {
     subscriptionStartDate;
     subscriptionEndDate;
     role;
+    isActive;
+    age;
     expenses;
 };
 exports.User = User;
@@ -91,6 +93,18 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: Boolean,
+    }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isActive", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: Number,
+    }),
+    __metadata("design:type", Number)
+], User.prototype, "age", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         type: [mongoose_2.default.Types.ObjectId],

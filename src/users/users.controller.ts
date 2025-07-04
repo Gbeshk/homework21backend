@@ -34,7 +34,10 @@ export class UsersController {
   async getStatistics(@UserId() userId: ObjectId) {
     return this.usersService.getStatistics(userId);
   }
-
+  @Get('statistic')
+  getStatistic() {
+    return this.usersService.getStatistic();
+  }
   @Get(':id')
   getUserById(@Param('id') id) {
     return this.usersService.getUserById(id);

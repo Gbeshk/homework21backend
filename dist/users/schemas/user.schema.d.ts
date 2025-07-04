@@ -9,6 +9,8 @@ export declare class User {
     subscriptionStartDate: string;
     subscriptionEndDate: string;
     role: string;
+    isActive: boolean;
+    age: number;
     expenses: mongoose.Types.ObjectId[];
 }
 export declare const userSchema: mongoose.Schema<User, mongoose.Model<User, any, any, any, mongoose.Document<unknown, any, User, any> & User & {

@@ -89,6 +89,34 @@ let ExpensesService = class ExpensesService {
         }
         return 'Expense updated successfully';
     }
+    async getStatistic() {
+        const expenses = await this.expenseModel.aggregate([
+            {
+                $group: {
+                    _id: '$category',
+                    total: { $sum: '$price' },
+                    count: { $sum: 1 },
+                    items: { $push: '$$ROOT' },
+                },
+            },
+        ]);
+        return expenses;
+    }
+    async getSpenders(limit) {
+        const expenses = await this.expenseModel.aggregate([
+            {
+                $group: {
+                    _id: '$author',
+                    total: { $sum: '$price' },
+                    count: { $sum: 1 },
+                },
+            },
+            {
+                $limit: limit,
+            },
+        ]);
+        return expenses;
+    }
 };
 exports.ExpensesService = ExpensesService;
 exports.ExpensesService = ExpensesService = __decorate([

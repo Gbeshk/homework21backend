@@ -42,4 +42,5 @@ export declare class UsersService {
         totalExpenses: number;
         totalProducts: number;
     }>;
+    getStatistic(): Promise<any[]>;
 }

@@ -60,6 +60,16 @@ export class User {
   role: string;
 
   @Prop({
+    type: Boolean,
+  })
+  isActive: boolean;
+
+  @Prop({
+    type: Number,
+  })
+  age: number;
+
+  @Prop({
     type: [mongoose.Types.ObjectId],
     ref: 'expenses',
     default: [],

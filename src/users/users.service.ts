@@ -22,6 +22,28 @@ export class UsersService {
     @InjectModel('Product') private productModel: Model<Product>,
   ) {}
 
+  //  async onModuleInit() {
+  //   const users = await this.userModel.find({ isActive: { $exists: false } });
+
+  //   for (let i = 0; i < users.length; i++) {
+  //     const isActive = Math.random() < 0.5;
+  //     await this.userModel.updateOne(
+  //       { _id: users[i]._id },
+  //       { $set: { isActive } }
+  //     );
+  //   }
+  // }
+
+  // async onModuleInit() {
+  //   const users = await this.userModel.find();
+
+  //   for (let i = 0; i < users.length; i++) {
+  //     const age = Math.floor(Math.random() * 80) + 1;
+
+  //     await this.userModel.updateOne({ _id: users[i]._id }, { $set: { age } });
+  //   }
+  // }
+
   async getAllUsers(start: number, end: number, gender: string, email: string) {
     const filter: any = {};
 
@@ -163,5 +185,17 @@ export class UsersService {
       totalExpenses,
       totalProducts,
     };
+  }
+  async getStatistic() {
+    const expenses = await this.userModel.aggregate([
+      {
+        $group: {
+          _id: '$gender',
+          count: { $sum: 1 },
+          averageAge: { $avg: '$age' },
+        },
+      },
+    ]);
+    return expenses;
   }
 }

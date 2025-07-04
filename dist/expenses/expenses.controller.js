@@ -31,6 +31,12 @@ let ExpensesController = class ExpensesController {
         const end = page * take;
         return this.expensesService.getAllExpenses(category, start, end, priceFrom, priceTo, +page, +take);
     }
+    getSpenders(limit) {
+        return this.expensesService.getSpenders(+limit);
+    }
+    getStatistic() {
+        return this.expensesService.getStatistic();
+    }
     getExpenseById(id) {
         return this.expensesService.getExpenseById(id);
     }
@@ -65,6 +71,19 @@ __decorate([
     __metadata("design:paramtypes", [String, query_params_dto_1.QueryParamsDto]),
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "getAllExpenses", null);
+__decorate([
+    (0, common_1.Get)('/top-spenders'),
+    __param(0, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "getSpenders", null);
+__decorate([
+    (0, common_1.Get)('statistic'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "getStatistic", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

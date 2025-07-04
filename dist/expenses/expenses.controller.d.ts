@@ -16,6 +16,8 @@ export declare class ExpensesController {
             __v: number;
         })[];
     }>;
+    getSpenders(limit: string): Promise<any[]>;
+    getStatistic(): Promise<any[]>;
     getExpenseById(id: any): Promise<import("mongoose").Document<unknown, {}, import("./schemas/expenses.schema").Expense, {}> & import("./schemas/expenses.schema").Expense & {
         _id: import("mongoose").Types.ObjectId;
     } & {

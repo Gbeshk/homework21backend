@@ -17,6 +17,7 @@ export declare class UsersController {
         totalExpenses: number;
         totalProducts: number;
     }>;
+    getStatistic(): Promise<any[]>;
     getUserById(id: any): Promise<import("mongoose").Document<unknown, {}, import("./schemas/user.schema").User, {}> & import("./schemas/user.schema").User & {
         _id: import("mongoose").Types.ObjectId;
     } & {

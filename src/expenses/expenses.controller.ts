@@ -41,6 +41,14 @@ export class ExpensesController {
       +take,
     );
   }
+  @Get('/top-spenders')
+  getSpenders(@Query('limit') limit: string) {
+    return this.expensesService.getSpenders(+limit);
+  }
+  @Get('statistic')
+  getStatistic() {
+    return this.expensesService.getStatistic();
+  }
 
   @Get(':id')
   getExpenseById(@Param('id') id) {

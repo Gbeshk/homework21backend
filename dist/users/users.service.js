@@ -130,6 +130,18 @@ let UsersService = class UsersService {
             totalProducts,
         };
     }
+    async getStatistic() {
+        const expenses = await this.userModel.aggregate([
+            {
+                $group: {
+                    _id: '$gender',
+                    count: { $sum: 1 },
+                    averageAge: { $avg: '$age' },
+                },
+            },
+        ]);
+        return expenses;
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
