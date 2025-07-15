@@ -8,7 +8,10 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,6 +21,7 @@ import { IsAuthGuard } from 'src/auth/guards/is-auth.guard';
 import { UserId } from './decorators/user.decorator';
 import { ObjectId } from 'mongoose';
 import { ChangeRoleDto } from './dto/change-role.dto';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -29,6 +33,23 @@ export class UsersController {
     const end = page * take;
     return this.usersService.getAllUsers(start, end, gender, email);
   }
+  // @Post('get-file')
+  // getFile(@Body('fileId') fileId: string) {
+  //   return this.usersService.getFileById(fileId);
+  // }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    return this.usersService.uploadFile(file);
+  }
+
+  @Post('upload-many')
+  @UseInterceptors(FilesInterceptor('files'))
+  uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
+    return this.usersService.uploadFiles(files);
+  }
+
   @Get('analytics')
   @UseGuards(IsAuthGuard)
   async getStatistics(@UserId() userId: ObjectId) {

@@ -9,12 +9,15 @@ import { isValidObjectId, Model, ObjectId, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/users/schemas/user.schema';
 import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
+import { AwsS3Service } from 'src/awss3/awss3.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ExpensesService {
   constructor(
     @InjectModel('Expense') private expenseModel: Model<Expense>,
     @InjectModel('user') private userModel: Model<User>,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   // async onModuleInit() {
@@ -67,25 +70,32 @@ export class ExpensesService {
     return expense;
   }
 
-  async createExpense({
-    category,
-    productName,
-    quantity,
-    price,
-    totalPrice,
-    userId,
-  }) {
-    const existExpense = await this.userModel.findById(userId);
-    if (!existExpense) throw new BadRequestException('expense not found');
+  async createExpense(userId, createExpenseDto, file) {
+    const existUser = await this.userModel.findById(userId);
+    if (!existUser) throw new BadRequestException('user not found');
+
+    let imageUrl: string | undefined;
+
+    if (file) {
+      const fileType = file.mimetype.split('/')[1];
+      const fileKey = `images/${uuidv4()}.${fileType}`;
+      await this.awsS3Service.uploadFile(fileKey, file);
+      imageUrl = process.env.CLOUD_FRONT + fileKey;
+    }
+
+    const totalPrice = createExpenseDto.quantity * createExpenseDto.price;
+
     const newExpense = await this.expenseModel.create({
-      category,
-      productName,
-      quantity,
-      price,
-      totalPrice,
-      author: existExpense._id,
+      category: createExpenseDto.category,
+      productName: createExpenseDto.productName,
+      quantity: createExpenseDto.quantity,
+      price: createExpenseDto.price,
+      totalPrice: totalPrice,
+      img: imageUrl,
+      author: existUser._id,
     });
-    await this.userModel.findByIdAndUpdate(existExpense._id, {
+
+    await this.userModel.findByIdAndUpdate(existUser._id, {
       $push: { expenses: newExpense._id },
     });
 
@@ -98,15 +108,21 @@ export class ExpensesService {
     }
 
     const expense = await this.expenseModel.findById(id);
-    if (expense?.author != userId) {
-      throw new BadRequestException('you dont have permission');
-    }
     if (!expense) {
       throw new NotFoundException('Expense not found');
     }
 
-    await this.expenseModel.findByIdAndDelete(id);
+    if (expense.author.toString() !== userId.toString()) {
+      throw new BadRequestException('you dont have permission');
+    }
 
+    if (expense.img) {
+      const cloudFrontPrefix = process.env.CLOUD_FRONT!;
+      const fileKey = expense.img.replace(cloudFrontPrefix, '');
+      await this.awsS3Service.deleteFileById(fileKey);
+    }
+
+    await this.expenseModel.findByIdAndDelete(id);
     await this.userModel.updateOne(
       { _id: expense.author },
       { $pull: { expenses: new Types.ObjectId(id) } },
@@ -119,27 +135,45 @@ export class ExpensesService {
     id: string,
     updateExpenseDto: UpdateExpenseDto,
     userId: ObjectId,
+    file?: Express.Multer.File,
   ) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid expense ID');
     }
+
     const expense = await this.expenseModel.findById(id);
-
-    if (expense?.author != userId) {
-      throw new BadRequestException('you dont have permission');
-    }
-    const updatedExpense = await this.expenseModel.findByIdAndUpdate(
-      id,
-      { $set: updateExpenseDto },
-      { new: true },
-    );
-
-    if (!updatedExpense) {
+    if (!expense) {
       throw new NotFoundException('Expense not found');
     }
 
-    return 'Expense updated successfully';
+    if (expense.author.toString() !== userId.toString()) {
+      throw new BadRequestException('you dont have permission');
+    }
+
+    let newImageUrl = expense.img;
+
+    if (file) {
+      const cloudFrontPrefix = process.env.CLOUD_FRONT || '';
+      const oldFileKey = expense.img?.replace(cloudFrontPrefix, '');
+      if (oldFileKey) {
+        await this.awsS3Service.deleteFileById(oldFileKey);
+      }
+
+      const fileType = file.mimetype.split('/')[1];
+      const newFileKey = `images/${uuidv4()}.${fileType}`;
+      await this.awsS3Service.uploadFile(newFileKey, file);
+      newImageUrl = process.env.CLOUD_FRONT + newFileKey;
+    }
+
+    const updatedExpense = await this.expenseModel.findByIdAndUpdate(
+      id,
+      { $set: { ...updateExpenseDto, img: newImageUrl } },
+      { new: true },
+    );
+
+    return { success: true, data: updatedExpense };
   }
+
   async getStatistic() {
     const expenses = await this.expenseModel.aggregate([
       {

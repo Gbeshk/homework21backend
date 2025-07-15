@@ -4,6 +4,7 @@ export declare class Product {
     quantity: number;
     price: number;
     description: string;
+    img: string;
 }
 export declare const productSchema: import("mongoose").Schema<Product, import("mongoose").Model<Product, any, any, any, import("mongoose").Document<unknown, any, Product, any> & Product & {
     _id: import("mongoose").Types.ObjectId;

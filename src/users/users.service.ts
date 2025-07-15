@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ForbiddenException,
   HttpException,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +12,8 @@ import { isValidObjectId, Model, ObjectId, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { Expense } from 'src/expenses/schemas/expenses.schema';
 import { Product } from 'src/products/schemas/product.schema';
+import { AwsS3Service } from 'src/awss3/awss3.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +21,7 @@ export class UsersService {
     @InjectModel('User') private userModel: Model<User>,
     @InjectModel('Expense') private expenseModel: Model<Expense>,
     @InjectModel('Product') private productModel: Model<Product>,
+    private awsS3Service: AwsS3Service,
   ) {}
 
   //  async onModuleInit() {
@@ -60,6 +62,30 @@ export class UsersService {
     const result = await this.userModel.find(filter).skip(skip).limit(limit);
 
     return result;
+  }
+  async uploadFiles(files: Express.Multer.File[]) {
+    const uploadFileIds: string[] = [];
+
+    for (let file of files) {
+      const fileType = file.mimetype.split('/')[1];
+      const fileId = `images/${uuidv4()}.${fileType}`;
+      await this.awsS3Service.uploadFile(fileId, file);
+      uploadFileIds.push(fileId);
+    }
+
+    return uploadFileIds;
+  }
+
+  async uploadFile(file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const fileType = file.mimetype.split('/')[1];
+    const fileId = `images/${uuidv4()}.${fileType}`;
+    await this.awsS3Service.uploadFile(fileId, file);
+    const pictureUrl = process.env.CLOUD_FRONT + fileId;
+    return pictureUrl;
   }
 
   async getUserById(id: string) {

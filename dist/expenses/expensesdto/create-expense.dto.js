@@ -10,11 +10,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateExpenseDto = void 0;
+const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class CreateExpenseDto {
     category;
     productName;
-    quantity;
     price;
 }
 exports.CreateExpenseDto = CreateExpenseDto;
@@ -30,13 +30,8 @@ __decorate([
 ], CreateExpenseDto.prototype, "productName", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(1),
-    __metadata("design:type", Number)
-], CreateExpenseDto.prototype, "quantity", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateExpenseDto.prototype, "price", void 0);

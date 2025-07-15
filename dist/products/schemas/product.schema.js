@@ -17,6 +17,7 @@ let Product = class Product {
     quantity;
     price;
     description;
+    img;
 };
 exports.Product = Product;
 __decorate([
@@ -54,6 +55,12 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], Product.prototype, "description", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        type: String,
+    }),
+    __metadata("design:type", String)
+], Product.prototype, "img", void 0);
 exports.Product = Product = __decorate([
     (0, mongoose_1.Schema)()
 ], Product);

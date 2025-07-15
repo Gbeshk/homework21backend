@@ -17,6 +17,7 @@ const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const auth_module_1 = require("./auth/auth.module");
 const logger_middleware_1 = require("./common/middlewares/logger.middleware");
+const awss3_module_1 = require("./awss3/awss3.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -32,6 +33,7 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             mongoose_1.MongooseModule.forRoot(process.env.MONGO_URL),
             auth_module_1.AuthModule,
+            awss3_module_1.AwsS3Module,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

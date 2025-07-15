@@ -16,14 +16,18 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
+const awss3_service_1 = require("../awss3/awss3.service");
+const uuid_1 = require("uuid");
 let UsersService = class UsersService {
     userModel;
     expenseModel;
     productModel;
-    constructor(userModel, expenseModel, productModel) {
+    awsS3Service;
+    constructor(userModel, expenseModel, productModel, awsS3Service) {
         this.userModel = userModel;
         this.expenseModel = expenseModel;
         this.productModel = productModel;
+        this.awsS3Service = awsS3Service;
     }
     async getAllUsers(start, end, gender, email) {
         const filter = {};
@@ -38,6 +42,26 @@ let UsersService = class UsersService {
         const skip = start;
         const result = await this.userModel.find(filter).skip(skip).limit(limit);
         return result;
+    }
+    async uploadFiles(files) {
+        const uploadFileIds = [];
+        for (let file of files) {
+            const fileType = file.mimetype.split('/')[1];
+            const fileId = `images/${(0, uuid_1.v4)()}.${fileType}`;
+            await this.awsS3Service.uploadFile(fileId, file);
+            uploadFileIds.push(fileId);
+        }
+        return uploadFileIds;
+    }
+    async uploadFile(file) {
+        if (!file) {
+            throw new common_1.BadRequestException('No file uploaded');
+        }
+        const fileType = file.mimetype.split('/')[1];
+        const fileId = `images/${(0, uuid_1.v4)()}.${fileType}`;
+        await this.awsS3Service.uploadFile(fileId, file);
+        const pictureUrl = process.env.CLOUD_FRONT + fileId;
+        return pictureUrl;
     }
     async getUserById(id) {
         if (!(0, mongoose_2.isValidObjectId)(id)) {
@@ -151,6 +175,7 @@ exports.UsersService = UsersService = __decorate([
     __param(2, (0, mongoose_1.InjectModel)('Product')),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
-        mongoose_2.Model])
+        mongoose_2.Model,
+        awss3_service_1.AwsS3Service])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

@@ -31,6 +31,11 @@ export class Product {
     required: true,
   })
   description: string;
+
+  @Prop({
+    type: String,
+  })
+  img: string;
 }
 
 export const productSchema = SchemaFactory.createForClass(Product);

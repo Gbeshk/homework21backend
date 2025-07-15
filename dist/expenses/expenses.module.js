@@ -13,12 +13,14 @@ const expenses_controller_1 = require("./expenses.controller");
 const expenses_schema_1 = require("./schemas/expenses.schema");
 const mongoose_1 = require("@nestjs/mongoose");
 const user_schema_1 = require("../users/schemas/user.schema");
+const awss3_module_1 = require("../awss3/awss3.module");
 let ExpenseModule = class ExpenseModule {
 };
 exports.ExpenseModule = ExpenseModule;
 exports.ExpenseModule = ExpenseModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            awss3_module_1.AwsS3Module,
             mongoose_1.MongooseModule.forFeature([
                 { name: 'Expense', schema: expenses_schema_1.expenseSchema },
                 { schema: user_schema_1.userSchema, name: 'user' },

@@ -8,7 +8,9 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { UpdateExpenseDto } from './expensesdto/update-expense.dto';
@@ -18,12 +20,36 @@ import { QueryParamsDto } from './expensesdto/query-params.dto';
 import { IsAuthGuard } from 'src/auth/guards/is-auth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
 import { ObjectId } from 'mongoose';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(IsAuthGuard)
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
-
+  @Post()
+  @UseInterceptors(FileInterceptor('image'))
+  createExpense(
+    @Body() createExpenseDto: CreateExpenseDto,
+    @UserId() userId: ObjectId,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.expensesService.createExpense(userId, createExpenseDto, file);
+  }
+  // @Put(':id')
+  // @UseInterceptors(FileInterceptor('file'))
+  // updateExpenseById(
+  //   @Param('id') id,
+  //   @UploadedFile() file: Express.Multer.File,
+  //   @Body() updateExpenseDto: UpdateExpenseDto,
+  //   @UserId() userId: ObjectId,
+  // ) {
+  //   return this.expensesService.updateExpenseById(
+  //     id,
+  //     updateExpenseDto,
+  //     userId,
+  //     file,
+  //   );
+  // }
   @Get()
   getAllExpenses(
     @Query('category', new CategoryPipe()) category: string,
@@ -55,38 +81,24 @@ export class ExpensesController {
     return this.expensesService.getExpenseById(id);
   }
 
-  @Post()
-  createExpense(
-    @UserId() userId: string,
-    @Body() createExpenseDto: CreateExpenseDto,
-  ) {
-    const category = createExpenseDto?.category;
-    const productName = createExpenseDto?.productName;
-    const quantity = createExpenseDto?.quantity;
-    const price = createExpenseDto?.price;
-
-    const totalPrice = price * quantity;
-    return this.expensesService.createExpense({
-      category,
-      productName,
-      quantity,
-      price,
-      totalPrice,
-      userId,
-    });
-  }
-
   @Delete(':id')
   deleteExpenseById(@UserId() userId: ObjectId, @Param('id') id) {
     return this.expensesService.deleteExpenseById(id, userId);
   }
 
   @Put(':id')
+  @UseInterceptors(FileInterceptor('image'))
   updateExpense(
     @Param('id') id,
-    @Body() UpdateExpenseDto: UpdateExpenseDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() updateExpenseDto: UpdateExpenseDto,
     @UserId() userId: ObjectId,
   ) {
-    return this.expensesService.updateExpenseById(id, UpdateExpenseDto, userId);
+    return this.expensesService.updateExpenseById(
+      id,
+      updateExpenseDto,
+      userId,
+      file,
+    );
   }
 }

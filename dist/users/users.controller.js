@@ -21,6 +21,7 @@ const query_params_dto_1 = require("./dto/query-params.dto");
 const is_auth_guard_1 = require("../auth/guards/is-auth.guard");
 const user_decorator_1 = require("./decorators/user.decorator");
 const change_role_dto_1 = require("./dto/change-role.dto");
+const platform_express_1 = require("@nestjs/platform-express");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -30,6 +31,12 @@ let UsersController = class UsersController {
         const start = (page - 1) * take;
         const end = page * take;
         return this.usersService.getAllUsers(start, end, gender, email);
+    }
+    uploadFile(file) {
+        return this.usersService.uploadFile(file);
+    }
+    uploadFiles(files) {
+        return this.usersService.uploadFiles(files);
     }
     async getStatistics(userId) {
         return this.usersService.getStatistics(userId);
@@ -64,6 +71,22 @@ __decorate([
     __metadata("design:paramtypes", [query_params_dto_1.QueryParamsDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "getAllUsers", null);
+__decorate([
+    (0, common_1.Post)('upload'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "uploadFile", null);
+__decorate([
+    (0, common_1.Post)('upload-many'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files')),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "uploadFiles", null);
 __decorate([
     (0, common_1.Get)('analytics'),
     (0, common_1.UseGuards)(is_auth_guard_1.IsAuthGuard),

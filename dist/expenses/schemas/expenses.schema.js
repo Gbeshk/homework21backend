@@ -15,9 +15,8 @@ const mongoose_2 = require("mongoose");
 let Expense = class Expense {
     category;
     productName;
-    quantity;
+    img;
     price;
-    totalPrice;
     author;
 };
 exports.Expense = Expense;
@@ -37,11 +36,11 @@ __decorate([
 ], Expense.prototype, "productName", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: Number,
+        type: String,
         required: true,
     }),
-    __metadata("design:type", Number)
-], Expense.prototype, "quantity", void 0);
+    __metadata("design:type", String)
+], Expense.prototype, "img", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         type: Number,
@@ -49,13 +48,6 @@ __decorate([
     }),
     __metadata("design:type", Number)
 ], Expense.prototype, "price", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({
-        type: Number,
-        required: true,
-    }),
-    __metadata("design:type", Number)
-], Expense.prototype, "totalPrice", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         type: mongoose_2.default.Schema.Types.ObjectId,

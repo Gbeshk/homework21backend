@@ -4,7 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export declare class ProductsController {
     private readonly productsService;
     constructor(productsService: ProductsService);
-    create(createProductDto: CreateProductDto): Promise<{
+    create(createProductDto: CreateProductDto, file: Express.Multer.File): Promise<{
         success: string;
         data: import("mongoose").Document<unknown, {}, import("./schemas/product.schema").Product, {}> & import("./schemas/product.schema").Product & {
             _id: import("mongoose").Types.ObjectId;
@@ -26,6 +26,13 @@ export declare class ProductsController {
     } & {
         __v: number;
     }>;
-    update(id: any, updateProductDto: UpdateProductDto): Promise<string>;
+    update(id: string, updateProductDto: UpdateProductDto, file?: Express.Multer.File): Promise<{
+        success: boolean;
+        data: (import("mongoose").Document<unknown, {}, import("./schemas/product.schema").Product, {}> & import("./schemas/product.schema").Product & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        }) | null;
+    }>;
     remove(id: any): Promise<string>;
 }

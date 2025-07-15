@@ -12,12 +12,14 @@ const products_service_1 = require("./products.service");
 const products_controller_1 = require("./products.controller");
 const mongoose_1 = require("@nestjs/mongoose");
 const product_schema_1 = require("./schemas/product.schema");
+const awss3_module_1 = require("../awss3/awss3.module");
 let ProductsModule = class ProductsModule {
 };
 exports.ProductsModule = ProductsModule;
 exports.ProductsModule = ProductsModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            awss3_module_1.AwsS3Module,
             mongoose_1.MongooseModule.forFeature([{ schema: product_schema_1.productSchema, name: 'Product' }]),
         ],
         controllers: [products_controller_1.ProductsController],

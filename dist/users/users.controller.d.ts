@@ -12,6 +12,8 @@ export declare class UsersController {
     } & {
         __v: number;
     })[]>;
+    uploadFile(file: Express.Multer.File): Promise<string>;
+    uploadFiles(files: Express.Multer.File[]): Promise<string[]>;
     getStatistics(userId: ObjectId): Promise<{
         totalUsers: number;
         totalExpenses: number;

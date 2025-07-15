@@ -4,16 +4,20 @@ import { Model, ObjectId, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { Expense } from 'src/expenses/schemas/expenses.schema';
 import { Product } from 'src/products/schemas/product.schema';
+import { AwsS3Service } from 'src/awss3/awss3.service';
 export declare class UsersService {
     private userModel;
     private expenseModel;
     private productModel;
-    constructor(userModel: Model<User>, expenseModel: Model<Expense>, productModel: Model<Product>);
+    private awsS3Service;
+    constructor(userModel: Model<User>, expenseModel: Model<Expense>, productModel: Model<Product>, awsS3Service: AwsS3Service);
     getAllUsers(start: number, end: number, gender: string, email: string): Promise<(import("mongoose").Document<unknown, {}, User, {}> & User & {
         _id: Types.ObjectId;
     } & {
         __v: number;
     })[]>;
+    uploadFiles(files: Express.Multer.File[]): Promise<string[]>;
+    uploadFile(file: Express.Multer.File): Promise<string>;
     getUserById(id: string): Promise<import("mongoose").Document<unknown, {}, User, {}> & User & {
         _id: Types.ObjectId;
     } & {

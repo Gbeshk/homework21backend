@@ -2,9 +2,8 @@ import mongoose from 'mongoose';
 export declare class Expense {
     category: string;
     productName: string;
-    quantity: number;
+    img: string;
     price: number;
-    totalPrice: number;
     author: mongoose.Schema.Types.ObjectId;
 }
 export declare const expenseSchema: mongoose.Schema<Expense, mongoose.Model<Expense, any, any, any, mongoose.Document<unknown, any, Expense, any> & Expense & {

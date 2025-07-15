@@ -21,10 +21,14 @@ const create_expense_dto_1 = require("./expensesdto/create-expense.dto");
 const query_params_dto_1 = require("./expensesdto/query-params.dto");
 const is_auth_guard_1 = require("../auth/guards/is-auth.guard");
 const user_decorator_1 = require("../users/decorators/user.decorator");
+const platform_express_1 = require("@nestjs/platform-express");
 let ExpensesController = class ExpensesController {
     expensesService;
     constructor(expensesService) {
         this.expensesService = expensesService;
+    }
+    createExpense(createExpenseDto, userId, file) {
+        return this.expensesService.createExpense(userId, createExpenseDto, file);
     }
     getAllExpenses(category, { page, take, priceFrom, priceTo }) {
         const start = (page - 1) * take;
@@ -40,29 +44,24 @@ let ExpensesController = class ExpensesController {
     getExpenseById(id) {
         return this.expensesService.getExpenseById(id);
     }
-    createExpense(userId, createExpenseDto) {
-        const category = createExpenseDto?.category;
-        const productName = createExpenseDto?.productName;
-        const quantity = createExpenseDto?.quantity;
-        const price = createExpenseDto?.price;
-        const totalPrice = price * quantity;
-        return this.expensesService.createExpense({
-            category,
-            productName,
-            quantity,
-            price,
-            totalPrice,
-            userId,
-        });
-    }
     deleteExpenseById(userId, id) {
         return this.expensesService.deleteExpenseById(id, userId);
     }
-    updateExpense(id, UpdateExpenseDto, userId) {
-        return this.expensesService.updateExpenseById(id, UpdateExpenseDto, userId);
+    updateExpense(id, file, updateExpenseDto, userId) {
+        return this.expensesService.updateExpenseById(id, updateExpenseDto, userId, file);
     }
 };
 exports.ExpensesController = ExpensesController;
+__decorate([
+    (0, common_1.Post)(),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, user_decorator_1.UserId)()),
+    __param(2, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_expense_dto_1.CreateExpenseDto, Object, Object]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "createExpense", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)('category', new category_pipe_1.CategoryPipe())),
@@ -92,14 +91,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "getExpenseById", null);
 __decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, user_decorator_1.UserId)()),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, create_expense_dto_1.CreateExpenseDto]),
-    __metadata("design:returntype", void 0)
-], ExpensesController.prototype, "createExpense", null);
-__decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, user_decorator_1.UserId)()),
     __param(1, (0, common_1.Param)('id')),
@@ -109,11 +100,13 @@ __decorate([
 ], ExpensesController.prototype, "deleteExpenseById", null);
 __decorate([
     (0, common_1.Put)(':id'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, user_decorator_1.UserId)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, user_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, update_expense_dto_1.UpdateExpenseDto, Object]),
+    __metadata("design:paramtypes", [Object, Object, update_expense_dto_1.UpdateExpenseDto, Object]),
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "updateExpense", null);
 exports.ExpensesController = ExpensesController = __decorate([

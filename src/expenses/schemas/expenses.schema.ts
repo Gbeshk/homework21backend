@@ -16,10 +16,16 @@ export class Expense {
   productName: string;
 
   @Prop({
-    type: Number,
+    type: String,
     required: true,
   })
-  quantity: number;
+  img: string;
+
+  // @Prop({
+  //   type: Number,
+  //   required: true,
+  // })
+  // quantity: number;
 
   @Prop({
     type: Number,
@@ -27,11 +33,11 @@ export class Expense {
   })
   price: number;
 
-  @Prop({
-    type: Number,
-    required: true,
-  })
-  totalPrice: number;
+  // @Prop({
+  //   type: Number,
+  //   required: true,
+  // })
+  // totalPrice: number;
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,

@@ -16,12 +16,16 @@ exports.ExpensesService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("mongoose");
 const mongoose_2 = require("@nestjs/mongoose");
+const awss3_service_1 = require("../awss3/awss3.service");
+const uuid_1 = require("uuid");
 let ExpensesService = class ExpensesService {
     expenseModel;
     userModel;
-    constructor(expenseModel, userModel) {
+    awsS3Service;
+    constructor(expenseModel, userModel, awsS3Service) {
         this.expenseModel = expenseModel;
         this.userModel = userModel;
+        this.awsS3Service = awsS3Service;
     }
     async getAllExpenses(category, start, end, priceFrom, priceTo, page, take) {
         const total = await this.expenseModel.countDocuments();
@@ -43,19 +47,28 @@ let ExpensesService = class ExpensesService {
         }
         return expense;
     }
-    async createExpense({ category, productName, quantity, price, totalPrice, userId, }) {
-        const existExpense = await this.userModel.findById(userId);
-        if (!existExpense)
-            throw new common_1.BadRequestException('expense not found');
+    async createExpense(userId, createExpenseDto, file) {
+        const existUser = await this.userModel.findById(userId);
+        if (!existUser)
+            throw new common_1.BadRequestException('user not found');
+        let imageUrl;
+        if (file) {
+            const fileType = file.mimetype.split('/')[1];
+            const fileKey = `images/${(0, uuid_1.v4)()}.${fileType}`;
+            await this.awsS3Service.uploadFile(fileKey, file);
+            imageUrl = process.env.CLOUD_FRONT + fileKey;
+        }
+        const totalPrice = createExpenseDto.quantity * createExpenseDto.price;
         const newExpense = await this.expenseModel.create({
-            category,
-            productName,
-            quantity,
-            price,
-            totalPrice,
-            author: existExpense._id,
+            category: createExpenseDto.category,
+            productName: createExpenseDto.productName,
+            quantity: createExpenseDto.quantity,
+            price: createExpenseDto.price,
+            totalPrice: totalPrice,
+            img: imageUrl,
+            author: existUser._id,
         });
-        await this.userModel.findByIdAndUpdate(existExpense._id, {
+        await this.userModel.findByIdAndUpdate(existUser._id, {
             $push: { expenses: newExpense._id },
         });
         return { success: 'ok', data: newExpense };
@@ -65,29 +78,46 @@ let ExpensesService = class ExpensesService {
             throw new common_1.BadRequestException('Invalid expense ID');
         }
         const expense = await this.expenseModel.findById(id);
-        if (expense?.author != userId) {
-            throw new common_1.BadRequestException('you dont have permission');
-        }
         if (!expense) {
             throw new common_1.NotFoundException('Expense not found');
+        }
+        if (expense.author.toString() !== userId.toString()) {
+            throw new common_1.BadRequestException('you dont have permission');
+        }
+        if (expense.img) {
+            const cloudFrontPrefix = process.env.CLOUD_FRONT;
+            const fileKey = expense.img.replace(cloudFrontPrefix, '');
+            await this.awsS3Service.deleteFileById(fileKey);
         }
         await this.expenseModel.findByIdAndDelete(id);
         await this.userModel.updateOne({ _id: expense.author }, { $pull: { expenses: new mongoose_1.Types.ObjectId(id) } });
         return 'Expense deleted successfully';
     }
-    async updateExpenseById(id, updateExpenseDto, userId) {
+    async updateExpenseById(id, updateExpenseDto, userId, file) {
         if (!(0, mongoose_1.isValidObjectId)(id)) {
             throw new common_1.BadRequestException('Invalid expense ID');
         }
         const expense = await this.expenseModel.findById(id);
-        if (expense?.author != userId) {
-            throw new common_1.BadRequestException('you dont have permission');
-        }
-        const updatedExpense = await this.expenseModel.findByIdAndUpdate(id, { $set: updateExpenseDto }, { new: true });
-        if (!updatedExpense) {
+        if (!expense) {
             throw new common_1.NotFoundException('Expense not found');
         }
-        return 'Expense updated successfully';
+        if (expense.author.toString() !== userId.toString()) {
+            throw new common_1.BadRequestException('you dont have permission');
+        }
+        let newImageUrl = expense.img;
+        if (file) {
+            const cloudFrontPrefix = process.env.CLOUD_FRONT || '';
+            const oldFileKey = expense.img?.replace(cloudFrontPrefix, '');
+            if (oldFileKey) {
+                await this.awsS3Service.deleteFileById(oldFileKey);
+            }
+            const fileType = file.mimetype.split('/')[1];
+            const newFileKey = `images/${(0, uuid_1.v4)()}.${fileType}`;
+            await this.awsS3Service.uploadFile(newFileKey, file);
+            newImageUrl = process.env.CLOUD_FRONT + newFileKey;
+        }
+        const updatedExpense = await this.expenseModel.findByIdAndUpdate(id, { $set: { ...updateExpenseDto, img: newImageUrl } }, { new: true });
+        return { success: true, data: updatedExpense };
     }
     async getStatistic() {
         const expenses = await this.expenseModel.aggregate([
@@ -124,6 +154,7 @@ exports.ExpensesService = ExpensesService = __decorate([
     __param(0, (0, mongoose_2.InjectModel)('Expense')),
     __param(1, (0, mongoose_2.InjectModel)('user')),
     __metadata("design:paramtypes", [mongoose_1.Model,
-        mongoose_1.Model])
+        mongoose_1.Model,
+        awss3_service_1.AwsS3Service])
 ], ExpensesService);
 //# sourceMappingURL=expenses.service.js.map
